@@ -35,8 +35,8 @@ jobs:
       uses: tj-actions/changed-files@v14.3
       with:
         files: |
-          backend/**/*.py
-          !backend/**/migrations/*.py
+          **/*.py
+          !**/migrations/*.py
     #----------------------------------------------
     #             Print modified files
     #----------------------------------------------
