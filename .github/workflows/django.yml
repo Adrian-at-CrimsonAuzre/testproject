@@ -11,6 +11,9 @@ jobs:
 
     runs-on: self-hosted
 
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: on
+
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
@@ -21,6 +24,30 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Run Tests
+
+    #----------------------------------------------
+    #           Get changed python files
+    #----------------------------------------------
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v14.3
+      with:
+        files: |
+          backend/**/*.py
+          !backend/**/migrations/*.py
+    #----------------------------------------------
+    #             Print modified files
+    #----------------------------------------------
+    - name: List all modified files
       run: |
-        python manage.py test
+        for file in ${{ steps.changed-files.outputs.all_modified_files }}; do
+          echo "$file was modified"
+        done
+    #----------------------------------------------
+    #        Run Pylint on each changed file
+    #----------------------------------------------
+    - name: Run pylint
+      run: |
+        for file in ${{ steps.changed-files.outputs.all_modified_files }}; do
+            pylint --exit-zero --rcfile=pylintrc $file
+        done
