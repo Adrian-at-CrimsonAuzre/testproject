@@ -1,0 +1,68 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Backend
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: on
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.5
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
+      - name: Install dependencies
+        uses: BSFishy/pip-action@v1
+                - with:
+                - requirements: requirements.txt
+      #----------------------------------------------
+      #           Get changed python files
+      #----------------------------------------------
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v14.3
+        with:
+          files: |
+            backend/**/*.py
+            !backend/**/migrations/*.py
+      #----------------------------------------------
+      #             Print modified files
+      #----------------------------------------------
+      - name: List all modified files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_modified_files }}; do
+            echo "$file was modified"
+          done
+      #----------------------------------------------
+      #              Setup annotations
+      #----------------------------------------------
+      - name: Setup Annotations
+        run: |
+          echo "::add-matcher::.github/matchers/pylint-warning.json"
+          echo "::add-matcher::.github/matchers/pylint-error.json"
+          echo "::add-matcher::.github/matchers/flake8.json"
+      #----------------------------------------------
+      #        Run Pylint on each changed file
+      #----------------------------------------------
+      - name: Run pylint
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_modified_files }}; do
+              pylint --exit-zero --rcfile=pylintrc $file
+          done
